@@ -1,0 +1,55 @@
+name: Deploy to GitHub Pages
+
+# 触发条件：推送到main分支时执行
+on:
+  push:
+    branches: [ main ]
+
+# 权限配置
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 环境配置
+environment:
+  name: github-pages
+  url: ${{ steps.deployment.outputs.page_url }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 拉取仓库代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. 安装Node.js环境
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20 # 适配多数Vite项目的Node版本
+          cache: 'npm' # 缓存npm依赖，加速构建
+
+      # 3. 安装项目依赖
+      - name: Install dependencies
+        run: npm install
+
+      # 4. 打包构建项目
+      - name: Build project
+        run: npm run build
+
+      # 5. 配置GitHub Pages
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      # 6. 上传打包后的静态文件
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist' # Vite打包后的输出目录
+
+      # 7. 部署到GitHub Pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
